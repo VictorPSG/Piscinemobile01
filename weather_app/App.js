@@ -5,7 +5,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-// Componente AppBar com busca digitável
 const AppBar = ({ searchQuery, setSearchQuery }) => {
   const [isFocused, setIsFocused] = useState(false);
 
@@ -31,7 +30,7 @@ const AppBar = ({ searchQuery, setSearchQuery }) => {
           </TouchableOpacity>
         )}
       </View>
-      <TouchableOpacity style={styles.locationButton}>
+      <TouchableOpacity style={styles.locationButton} onPress={() => setSearchQuery("Geolocation")}>
         <Icon name="my-location" size={24} color="black" />
       </TouchableOpacity>
     </View>
