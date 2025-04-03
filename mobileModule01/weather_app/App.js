@@ -14,6 +14,7 @@ import {
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import GestureRecognizer from 'react-native-swipe-gestures';
 
 const AppBar = ({ searchQuery, setSearchQuery, onLocationPress }) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -47,66 +48,99 @@ const AppBar = ({ searchQuery, setSearchQuery, onLocationPress }) => {
   );
 };
 
-const CurrentlyScreen = ({ locationData, searchQuery }) => {
+const ScreenWrapper = ({ children, onSwipeLeft, onSwipeRight }) => {
+  const config = {
+    velocityThreshold: 0.3,
+    directionalOffsetThreshold: 80
+  };
+
   return (
-    <View style={styles.screenContainer}>
-      <Text style={styles.screenText}>Currently</Text>
-      {locationData && !searchQuery && (  //se tem dados de localização e não tem nada na busca(como um if)
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>Geolocation</Text>
-          {locationData.error && (
-            <Text style={styles.errorText}>{locationData.error}</Text>
-          )}
-        </View>
-      )}
-      {searchQuery && ( //se tem algo na busca
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>{searchQuery}</Text>
-        </View>
-      )}
-    </View>
+    <GestureRecognizer
+      onSwipeLeft={onSwipeLeft}
+      onSwipeRight={onSwipeRight}
+      config={config}
+      style={{ flex: 1 }}
+    >
+      <View style={{ flex: 1 }}>
+        {children}
+      </View>
+    </GestureRecognizer>
   );
 };
 
-const TodayScreen = ({ locationData, searchQuery }) => {
+const CurrentlyScreen = ({ locationData, searchQuery, navigation }) => {
   return (
-    <View style={styles.screenContainer}>
-      <Text style={styles.screenText}>Today</Text>
-      {locationData && !searchQuery && (
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>Geolocation</Text>
-          {locationData.error && (
-            <Text style={styles.errorText}>{locationData.error}</Text>
-          )}
-        </View>
-      )}
-      {searchQuery && (
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>{searchQuery}</Text>
-        </View>
-      )}
-    </View>
+    <ScreenWrapper 
+      onSwipeLeft={() => navigation.navigate('Today')}
+    >
+      <View style={styles.screenContainer}>
+        <Text style={styles.screenText}>Currently</Text>
+        {locationData && !searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>Geolocation</Text>
+            {locationData.error && (
+              <Text style={styles.errorText}>{locationData.error}</Text>
+            )}
+          </View>
+        )}
+        {searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>{searchQuery}</Text>
+          </View>
+        )}
+      </View>
+    </ScreenWrapper>
   );
 };
 
-const WeeklyScreen = ({ locationData, searchQuery }) => {
+const TodayScreen = ({ locationData, searchQuery, navigation }) => {
   return (
-    <View style={styles.screenContainer}>
-      <Text style={styles.screenText}>Weekly</Text>
-      {locationData && !searchQuery && (
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>Geolocation</Text>
-          {locationData.error && (
-            <Text style={styles.errorText}>{locationData.error}</Text>
-          )}
-        </View>
-      )}
-      {searchQuery && (
-        <View style={styles.locationDataContainer}>
-          <Text style={styles.screenText}>{searchQuery}</Text>
-        </View>
-      )}
-    </View>
+    <ScreenWrapper 
+      onSwipeLeft={() => navigation.navigate('Weekly')}
+      onSwipeRight={() => navigation.navigate('Currently')}
+    >
+      <View style={styles.screenContainer}>
+        <Text style={styles.screenText}>Today</Text>
+        {locationData && !searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>Geolocation</Text>
+            {locationData.error && (
+              <Text style={styles.errorText}>{locationData.error}</Text>
+            )}
+          </View>
+        )}
+        {searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>{searchQuery}</Text>
+          </View>
+        )}
+      </View>
+    </ScreenWrapper>
+  );
+};
+
+const WeeklyScreen = ({ locationData, searchQuery, navigation }) => {
+  return (
+    <ScreenWrapper 
+      onSwipeRight={() => navigation.navigate('Today')}
+    >
+      <View style={styles.screenContainer}>
+        <Text style={styles.screenText}>Weekly</Text>
+        {locationData && !searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>Geolocation</Text>
+            {locationData.error && (
+              <Text style={styles.errorText}>{locationData.error}</Text>
+            )}
+          </View>
+        )}
+        {searchQuery && (
+          <View style={styles.locationDataContainer}>
+            <Text style={styles.screenText}>{searchQuery}</Text>
+          </View>
+        )}
+      </View>
+    </ScreenWrapper>
   );
 };
 
@@ -135,12 +169,12 @@ const App = () => {
         return false;
       }
     }
-    return true; // No iOS, a permissão é solicitada diretamente na chamada getCurrentPosition
+    return true;
   };
 
   const getCurrentLocation = async () => {
-        setLocationData(true);
-        setSearchQuery('');
+    setLocationData(true);
+    setSearchQuery('');
   };
 
   useEffect(() => {
@@ -177,13 +211,31 @@ const App = () => {
           })}
         >
           <Tab.Screen name="Currently">
-            {() => <CurrentlyScreen locationData={locationData} searchQuery={searchQuery} />}
+            {({ navigation }) => (
+              <CurrentlyScreen 
+                locationData={locationData} 
+                searchQuery={searchQuery} 
+                navigation={navigation} 
+              />
+            )}
           </Tab.Screen>
           <Tab.Screen name="Today">
-            {() => <TodayScreen locationData={locationData} searchQuery={searchQuery} />}
+            {({ navigation }) => (
+              <TodayScreen 
+                locationData={locationData} 
+                searchQuery={searchQuery} 
+                navigation={navigation} 
+              />
+            )}
           </Tab.Screen>
           <Tab.Screen name="Weekly">
-            {() => <WeeklyScreen locationData={locationData} searchQuery={searchQuery} />}
+            {({ navigation }) => (
+              <WeeklyScreen 
+                locationData={locationData} 
+                searchQuery={searchQuery} 
+                navigation={navigation} 
+              />
+            )}
           </Tab.Screen>
         </Tab.Navigator>
       </NavigationContainer>
